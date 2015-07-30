@@ -1,7 +1,7 @@
 % file: json.pi
 % description: a JSON module for Picat.
 % author: Mike Bionchik
-
+% licence: see COPYING
 
 parse_json(JSON)=T => parse_json_term(JSON, T, _).
 
@@ -9,7 +9,7 @@ parse_json(JSON)=T => parse_json_term(JSON, T, _).
 parse_json_term([' '|Str], Term, Rem) => parse_json_term(Str, Term, Rem).
 parse_json_term(['\n'|Str], Term, Rem) => parse_json_term(Str, Term, Rem).
 parse_json_term(['"'|Str], Term, Rem) => parse_json_string(Str, Term, Rem).
-parse_json_term([N|Str], Term, Rem), membchk(N,[to_atom(to_string(X)) : X in 0..9]) => parse_json_number([N|Str], Term, Rem).
+parse_json_term([N|Str], Term, Rem), membchk(N,"0123456789") => parse_json_number([N|Str], Term, Rem).
 parse_json_term(['{'|Str], Term, Rem) => parse_json_object(Str, Term, Rem).
 parse_json_term(['['|Str], Term, Rem) => parse_json_array(Str, Term, Rem).
 parse_json_term([t,r,u,e|Str], Term, Rem) => Term=true, Rem=Str.

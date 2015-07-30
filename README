@@ -1,3 +1,5 @@
 json.pi:
 
 a json parsing module for Picat.
+
+todo: get rid of concatenation
