@@ -49,5 +49,6 @@ parse_json_object_help([' '|Str], Pairs, Acc, Rem) => parse_json_object_help(Str
 parse_json_object_help(['"'|Str], Pairs, Acc, Rem) => parse_json_kv_pair(Str, Pair, Rem1), parse_json_object_help(Rem1, Pairs, Acc++Pair, Rem).
 
 parse_json_kv_pair(Str, Pair, Rem) => parse_json_string(Str, Key, Rem1), parse_json_val(Rem1, Val, Rem2), Pair=[Key=Val], Rem=Rem2.
+parse_json_val(['\n'|Str], Val, Rem) => parse_json_val(Str, Val, Rem).
 parse_json_val([' '|Str], Val, Rem) => parse_json_val(Str, Val, Rem).
 parse_json_val([':'|Str], Val, Rem) => parse_json_term(Str, Val, Rem).
