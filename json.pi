@@ -2,8 +2,6 @@
 % description: a JSON module for Picat.
 % author: Mike Bionchik
 
-to_number(Str)=N => membchk('.',Str) -> N = to_real(Str); N = to_integer(Str).
-
 
 parse_json(JSON)=T => parse_json_term(JSON, T, _).
 
@@ -24,11 +22,12 @@ parse_json_string_help(['\\'|['"'|Str]], Term, Acc, Rem) => parse_json_string_he
 parse_json_string_help(['"'|Str], Term, Acc, Rem) => Term=Acc, Rem=Str.
 parse_json_string_help([C|Str], Term, Acc, Rem) => parse_json_string_help(Str, Term, Acc++[C], Rem).
 
-parse_json_number(Str, Term, Rem) => parse_json_number_help(Str, Term, [], Rem).
 
+parse_json_number(Str, Term, Rem) => parse_json_number_help(Str, Term, [], Rem).
 
 parse_json_number_help([N|Str], Term, Acc, Rem), membchk(N, "0123456789.") => parse_json_number_help(Str, Term, Acc++[N], Rem).
 parse_json_number_help(Str, Term, Acc, Rem), Acc!=[] => Term=to_number(Acc), Rem=Str.
+to_number(Str)=N => membchk('.',Str) -> N = to_real(Str); N = to_integer(Str).
 
 
 parse_json_array(Str, Term, Rem) => parse_json_array_help(Str, Term, [], Rem).
