@@ -1,0 +1,5 @@
+import json.
+
+main() =>
+    JSONData = read_file_chars(),
+    writef("%w%n", parse_json(JSONData)).
