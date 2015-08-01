@@ -24,6 +24,9 @@
 % OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 % THE SOFTWARE.
 
+import util.
+
+
 parse_json(JSON)=T =>
     parse_json_term(JSON, T, _).
 
@@ -37,7 +40,7 @@ parse_json_term(['\n'|Str], Term, Rem) =>
 parse_json_term(['"'|Str], Term, Rem) =>
     parse_json_string(Str, Term, Rem).
 
-parse_json_term([N|Str], Term, Rem), membchk(N,"0123456789") =>
+parse_json_term([N|Str], Term, Rem), membchk(N,"-0123456789") =>
     parse_json_number([N|Str], Term, Rem).
 
 parse_json_term(['{'|Str], Term, Rem) =>
@@ -110,6 +113,18 @@ parse_json_number_help([N|Str], Term, Acc, Rem), membchk(N, "0123456789.") =>
 parse_json_number_help(Str, Term, Acc, Rem), Acc!=[] =>
     Term=to_number(Acc),
     Rem=Str.
+
+to_number(Str)=N, membchk('e',Str);membchk('E',Str) =>
+        L = Str.split("Ee"),
+        C = to_number(L[1]),
+        E = to_number(L[2]),
+        N = C*10**E.
+
+to_number(['+'|Str])=N =>  % why would anyone want this...
+    N = to_number(Str).
+
+to_number(['-'|Str])=N =>
+    N = - to_number(Str).
 
 to_number(Str)=N =>
     membchk('.',Str) -> N = to_real(Str); N = to_integer(Str).
