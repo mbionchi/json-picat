@@ -1,54 +1,174 @@
 % file: json.pi
-% description: a JSON module for Picat.
+% description: a JSON decoder module for Picat.
 % author: Mike Bionchik
-% licence: see COPYING
+%
+% The MIT License (MIT)
+% 
+% Copyright (c) 2015 Mike Bionchik
+% 
+% Permission is hereby granted, free of charge, to any person obtaining a copy
+% of this software and associated documentation files (the "Software"), to deal
+% in the Software without restriction, including without limitation the rights
+% to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+% copies of the Software, and to permit persons to whom the Software is
+% furnished to do so, subject to the following conditions:
+% 
+% The above copyright notice and this permission notice shall be included in
+% all copies or substantial portions of the Software.
+% 
+% THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+% IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+% FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+% AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+% LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+% OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+% THE SOFTWARE.
 
-parse_json(JSON)=T => parse_json_term(JSON, T, _).
-
-
-parse_json_term([' '|Str], Term, Rem) => parse_json_term(Str, Term, Rem).
-parse_json_term(['\n'|Str], Term, Rem) => parse_json_term(Str, Term, Rem).
-parse_json_term(['"'|Str], Term, Rem) => parse_json_string(Str, Term, Rem).
-parse_json_term([N|Str], Term, Rem), membchk(N,"0123456789") => parse_json_number([N|Str], Term, Rem).
-parse_json_term(['{'|Str], Term, Rem) => parse_json_object(Str, Term, Rem).
-parse_json_term(['['|Str], Term, Rem) => parse_json_array(Str, Term, Rem).
-parse_json_term([t,r,u,e|Str], Term, Rem) => Term=true, Rem=Str.
-parse_json_term([f,a,l,s,e|Str], Term, Rem) => Term=false, Rem=Str.
-
-
-parse_json_string(Str, Term, Rem) => parse_json_string_help(Str,Term,[],Rem).
-
-parse_json_string_help(['\\'|['"'|Str]], Term, Acc, Rem) => parse_json_string_help(Str, Term, Acc++['"'], Rem).
-parse_json_string_help(['"'|Str], Term, Acc, Rem) => Term=Acc, Rem=Str.
-parse_json_string_help([C|Str], Term, Acc, Rem) => parse_json_string_help(Str, Term, Acc++[C], Rem).
-
-
-parse_json_number(Str, Term, Rem) => parse_json_number_help(Str, Term, [], Rem).
-
-parse_json_number_help([N|Str], Term, Acc, Rem), membchk(N, "0123456789.") => parse_json_number_help(Str, Term, Acc++[N], Rem).
-parse_json_number_help(Str, Term, Acc, Rem), Acc!=[] => Term=to_number(Acc), Rem=Str.
-to_number(Str)=N => membchk('.',Str) -> N = to_real(Str); N = to_integer(Str).
+parse_json(JSON)=T =>
+    parse_json_term(JSON, T, _).
 
 
-parse_json_array(Str, Term, Rem) => parse_json_array_help(Str, Term, [], Rem).
+parse_json_term([' '|Str], Term, Rem) =>
+    parse_json_term(Str, Term, Rem).
 
-parse_json_array_help([']'|Str], Term, [], Rem) => Term={}, Rem=Str.
-parse_json_array_help([']'|Str], Term, Acc, Rem) => Term=Acc.to_array(), Rem=Str.
-parse_json_array_help([','|Str], Term, Acc, Rem) => parse_json_array_help(Str, Term, Acc, Rem).
-parse_json_array_help(['\n'|Str], Term, Acc, Rem) => parse_json_array_help(Str, Term, Acc, Rem).
-parse_json_array_help([' '|Str], Term, Acc, Rem) => parse_json_array_help(Str, Term, Acc, Rem).
-parse_json_array_help(Str, Term, Acc, Rem) => parse_json_term(Str, Term1, Rem1), parse_json_array_help(Rem1, Term, Acc++[Term1], Rem).
+parse_json_term(['\n'|Str], Term, Rem) =>
+    parse_json_term(Str, Term, Rem).
+
+parse_json_term(['"'|Str], Term, Rem) =>
+    parse_json_string(Str, Term, Rem).
+
+parse_json_term([N|Str], Term, Rem), membchk(N,"0123456789") =>
+    parse_json_number([N|Str], Term, Rem).
+
+parse_json_term(['{'|Str], Term, Rem) =>
+    parse_json_object(Str, Term, Rem).
+
+parse_json_term(['['|Str], Term, Rem) =>
+    parse_json_array(Str, Term, Rem).
+
+parse_json_term([t,r,u,e|Str], Term, Rem) =>
+    Term=true,
+    Rem=Str.
+
+parse_json_term([f,a,l,s,e|Str], Term, Rem) =>
+    Term=false,
+    Rem=Str.
+
+parse_json_term([n,u,l,l|Str], Term, Rem) =>
+    Term=null,
+    Rem=Str.
 
 
-parse_json_object(Str, Term, Rem) => parse_json_object_help(Str, Pairs, [], Rem), Term=new_map(Pairs).
+parse_json_string(Str, Term, Rem) =>
+    parse_json_string_help(Str,Term,[],Rem).
 
-parse_json_object_help(['}'|Str], Pairs, Acc, Rem) => Pairs=Acc, Rem=Str.
-parse_json_object_help([','|Str], Pairs, Acc, Rem) => parse_json_object_help(Str, Pairs, Acc, Rem).
-parse_json_object_help(['\n'|Str], Pairs, Acc, Rem) => parse_json_object_help(Str, Pairs, Acc, Rem).
-parse_json_object_help([' '|Str], Pairs, Acc, Rem) => parse_json_object_help(Str, Pairs, Acc, Rem).
-parse_json_object_help(['"'|Str], Pairs, Acc, Rem) => parse_json_kv_pair(Str, Pair, Rem1), parse_json_object_help(Rem1, Pairs, Acc++Pair, Rem).
+parse_json_string_help(['"'|Str], Term, Acc, Rem) =>
+    Term=Acc,
+    Rem=Str.
 
-parse_json_kv_pair(Str, Pair, Rem) => parse_json_string(Str, Key, Rem1), parse_json_val(Rem1, Val, Rem2), Pair=[Key=Val], Rem=Rem2.
-parse_json_val(['\n'|Str], Val, Rem) => parse_json_val(Str, Val, Rem).
-parse_json_val([' '|Str], Val, Rem) => parse_json_val(Str, Val, Rem).
-parse_json_val([':'|Str], Val, Rem) => parse_json_term(Str, Val, Rem).
+parse_json_string_help(['\\'|['"'|Str]], Term, Acc, Rem) =>
+    parse_json_string_help(Str, Term, Acc++['"'], Rem).
+
+parse_json_string_help(['\\'|['\\'|Str]], Term, Acc, Rem) =>
+    parse_json_string_help(Str, Term, Acc++['\\'], Rem).
+
+parse_json_string_help(['\\'|['/'|Str]], Term, Acc, Rem) =>
+    parse_json_string_help(Str, Term, Acc++['/'], Rem).
+
+parse_json_string_help(['\\'|['b'|Str]], Term, Acc, Rem) =>
+    parse_json_string_help(Str, Term, Acc++['\b'], Rem).
+
+parse_json_string_help(['\\'|['f'|Str]], Term, Acc, Rem) =>
+    parse_json_string_help(Str, Term, Acc++['\f'], Rem).
+
+parse_json_string_help(['\\'|['n'|Str]], Term, Acc, Rem) =>
+    parse_json_string_help(Str, Term, Acc++['\n'], Rem).
+
+parse_json_string_help(['\\'|['r'|Str]], Term, Acc, Rem) =>
+    parse_json_string_help(Str, Term, Acc++['\r'], Rem).
+
+parse_json_string_help(['\\'|['t'|Str]], Term, Acc, Rem) =>
+    parse_json_string_help(Str, Term, Acc++['\t'], Rem).
+
+parse_json_string_help(['\\'|['u'|[A|[B|[C|[D|Str]]]]]], Term, Acc, Rem),
+        foreach(Ch in [A,B,C,D]) membchk(Ch, "0123456789ABCDEFabcdef") end =>
+    parse_json_string_help(Str, Term, Acc++[chr(to_integer(['0','x',A,B,C,D]))], Rem).
+
+parse_json_string_help(['\\'|_], _, _, _) =>
+    throw {json_syntax_error, unexpected_escape_sequence}.
+
+parse_json_string_help([C|Str], Term, Acc, Rem) =>
+    parse_json_string_help(Str, Term, Acc++[C], Rem).
+
+
+parse_json_number(Str, Term, Rem) =>
+    parse_json_number_help(Str, Term, [], Rem).
+
+parse_json_number_help([N|Str], Term, Acc, Rem), membchk(N, "0123456789.") =>
+    parse_json_number_help(Str, Term, Acc++[N], Rem).
+
+parse_json_number_help(Str, Term, Acc, Rem), Acc!=[] =>
+    Term=to_number(Acc),
+    Rem=Str.
+
+to_number(Str)=N =>
+    membchk('.',Str) -> N = to_real(Str); N = to_integer(Str).
+
+
+parse_json_array(Str, Term, Rem) =>
+    parse_json_array_help(Str, Term, [], Rem).
+
+parse_json_array_help([']'|Str], Term, [], Rem) =>
+    Term={}, Rem=Str.
+
+parse_json_array_help([']'|Str], Term, Acc, Rem) =>
+    Term=Acc.to_array(), Rem=Str.
+
+parse_json_array_help([','|Str], Term, Acc, Rem) =>
+    parse_json_array_help(Str, Term, Acc, Rem).
+
+parse_json_array_help(['\n'|Str], Term, Acc, Rem) =>
+    parse_json_array_help(Str, Term, Acc, Rem).
+
+parse_json_array_help([' '|Str], Term, Acc, Rem) =>
+    parse_json_array_help(Str, Term, Acc, Rem).
+
+parse_json_array_help(Str, Term, Acc, Rem) =>
+    parse_json_term(Str, Term1, Rem1),
+    parse_json_array_help(Rem1, Term, Acc++[Term1], Rem).
+
+
+parse_json_object(Str, Term, Rem) =>
+    parse_json_object_help(Str, Pairs, [], Rem),
+    Term=new_map(Pairs).
+
+parse_json_object_help(['}'|Str], Pairs, Acc, Rem) =>
+    Pairs=Acc,
+    Rem=Str.
+
+parse_json_object_help([','|Str], Pairs, Acc, Rem) =>
+    parse_json_object_help(Str, Pairs, Acc, Rem).
+
+parse_json_object_help(['\n'|Str], Pairs, Acc, Rem) =>
+    parse_json_object_help(Str, Pairs, Acc, Rem).
+
+parse_json_object_help([' '|Str], Pairs, Acc, Rem) =>
+    parse_json_object_help(Str, Pairs, Acc, Rem).
+
+parse_json_object_help(['"'|Str], Pairs, Acc, Rem) =>
+    parse_json_kv_pair(Str, Pair, Rem1),
+    parse_json_object_help(Rem1, Pairs, Acc++Pair, Rem).
+
+parse_json_kv_pair(Str, Pair, Rem) =>
+    parse_json_string(Str, Key, Rem1), parse_json_val(Rem1, Val, Rem2),
+    Pair=[Key=Val],
+    Rem=Rem2.
+
+parse_json_val(['\n'|Str], Val, Rem) =>
+    parse_json_val(Str, Val, Rem).
+
+parse_json_val([' '|Str], Val, Rem) =>
+    parse_json_val(Str, Val, Rem).
+
+parse_json_val([':'|Str], Val, Rem) =>
+    parse_json_term(Str, Val, Rem).
