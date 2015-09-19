@@ -26,7 +26,6 @@
 
 import util.
 
-
 %
 % decoder codes
 %
@@ -197,19 +196,22 @@ parse_json_val([':'|Str], Val, Rem) =>
 % encoder codes
 %
 
-json_encode(Term)=S, string(Term) =>
-    S = "\"" ++ escape_string(Term, []) ++ "\"".
-    
-json_encode(Term)=S, number(Term) =>
-    S = to_string(Term).
-
-
 json_encode(true)=S =>
     S = "true".
 json_encode(false)=S =>
     S = "false".
 json_encode(null)=S =>
     S = "null".
+
+
+json_encode(Term)=S, string(Term) =>
+    S = "\"" ++ escape_string(Term, []) ++ "\"".
+
+json_encode(Term)=S, atom(Term) =>
+    S = json_encode(to_string(Term)).
+    
+json_encode(Term)=S, number(Term) =>
+    S = to_string(Term).
 
 
 json_encode(Term)=S, array(Term) =>
