@@ -1,5 +1,5 @@
 % file: json.pi
-% description: a JSON decoder module for Picat.
+% description: a JSON encoder/decoder module for Picat.
 % author: Mike Bionchik
 %
 % The MIT License (MIT)
@@ -27,7 +27,11 @@
 import util.
 
 
-parse_json(JSON)=T =>
+%
+% decoder codes
+%
+
+json_parse(JSON)=T =>
     parse_json_term(JSON, T, _).
 
 
@@ -187,3 +191,82 @@ parse_json_val([' '|Str], Val, Rem) =>
 
 parse_json_val([':'|Str], Val, Rem) =>
     parse_json_term(Str, Val, Rem).
+
+
+%
+% encoder codes
+%
+
+json_encode(Term)=S, string(Term) =>
+    S = "\"" ++ escape_string(Term, []) ++ "\"".
+    
+json_encode(Term)=S, number(Term) =>
+    S = to_string(Term).
+
+
+json_encode(true)=S =>
+    S = "true".
+json_encode(false)=S =>
+    S = "false".
+json_encode(null)=S =>
+    S = "null".
+
+
+json_encode(Term)=S, array(Term) =>
+    S = json_encode(Term.to_list()).
+
+json_encode(Term)=S, list(Term) =>
+    S = encode_list(Term, "[").
+
+json_encode(Term)=S, map(Term) =>
+    S = encode_map(map_to_list(Term), "{").
+
+escape_string([], Acc)=S =>
+    S = Acc.
+escape_string(['"'|T], Acc)=S =>
+    S = escape_string(T, Acc++['\\','"']).
+escape_string(['\\'|T], Acc)=S =>
+    S = escape_string(T, Acc++['\\','\\']).
+escape_string(['/'|T], Acc)=S =>
+    S = escape_string(T, Acc++['\\','/']).
+escape_string(['\b'|T], Acc)=S =>
+    S = escape_string(T, Acc++['\\','b']).
+escape_string(['\f'|T], Acc)=S =>
+    S = escape_string(T, Acc++['\\','f']).
+escape_string(['\n'|T], Acc)=S =>
+    S = escape_string(T, Acc++['\\','n']).
+escape_string(['\r'|T], Acc)=S =>
+    S = escape_string(T, Acc++['\\','r']).
+escape_string(['\t'|T], Acc)=S =>
+    S = escape_string(T, Acc++['\\','t']).
+escape_string([H|T], Acc)=S =>
+    S = escape_string(T, Acc++[H]).
+
+
+encode_list([], Acc)=S =>
+    append(Acc, "]", S).
+
+encode_list([H], Acc)=S =>
+    append(Acc, json_encode(H), Z),
+    S = encode_list([], Z).
+
+encode_list([H|T], Acc)=S =>
+    append(Acc, json_encode(H), Y),
+    append(Y, ",", Z),
+    S = encode_list(T, Z).
+
+encode_map([], Acc)=S =>
+    append(Acc, "}", S).
+
+encode_map([K=V], Acc)=S, string(K) =>
+    append(Acc, json_encode(K), X),
+    append(X, ":", Y),
+    append(Y, json_encode(V), Z),
+    S = encode_map([], Z).
+
+encode_map([K=V|T], Acc)=S, string(K) =>
+    append(Acc, json_encode(K), W),
+    append(W, ":", X),
+    append(X, json_encode(V), Y),
+    append(Y, ",", Z),
+    S = encode_map(T, Z).
