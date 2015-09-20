@@ -74,45 +74,56 @@ parse_json_string_help(['"'|Str], Term, Acc, Rem) =>
     Rem=Str.
 
 parse_json_string_help(['\\'|['"'|Str]], Term, Acc, Rem) =>
-    parse_json_string_help(Str, Term, Acc++['"'], Rem).
+    append(Acc, ['"'], Acc1),
+    parse_json_string_help(Str, Term, Acc1, Rem).
 
 parse_json_string_help(['\\'|['\\'|Str]], Term, Acc, Rem) =>
-    parse_json_string_help(Str, Term, Acc++['\\'], Rem).
+    append(Acc, ['\\'], Acc1),
+    parse_json_string_help(Str, Term, Acc1, Rem).
 
 parse_json_string_help(['\\'|['/'|Str]], Term, Acc, Rem) =>
-    parse_json_string_help(Str, Term, Acc++['/'], Rem).
+    append(Acc, ['/'], Acc1),
+    parse_json_string_help(Str, Term, Acc1, Rem).
 
 parse_json_string_help(['\\'|['b'|Str]], Term, Acc, Rem) =>
-    parse_json_string_help(Str, Term, Acc++['\b'], Rem).
+    append(Acc, ['\b'], Acc1),
+    parse_json_string_help(Str, Term, Acc1, Rem).
 
 parse_json_string_help(['\\'|['f'|Str]], Term, Acc, Rem) =>
-    parse_json_string_help(Str, Term, Acc++['\f'], Rem).
+    append(Acc, ['\f'], Acc1),
+    parse_json_string_help(Str, Term, Acc1, Rem).
 
 parse_json_string_help(['\\'|['n'|Str]], Term, Acc, Rem) =>
-    parse_json_string_help(Str, Term, Acc++['\n'], Rem).
+    append(Acc, ['\n'], Acc1),
+    parse_json_string_help(Str, Term, Acc1, Rem).
 
 parse_json_string_help(['\\'|['r'|Str]], Term, Acc, Rem) =>
-    parse_json_string_help(Str, Term, Acc++['\r'], Rem).
+    append(Acc, ['\r'], Acc1),
+    parse_json_string_help(Str, Term, Acc1, Rem).
 
 parse_json_string_help(['\\'|['t'|Str]], Term, Acc, Rem) =>
-    parse_json_string_help(Str, Term, Acc++['\t'], Rem).
+    append(Acc, ['\t'], Acc1),
+    parse_json_string_help(Str, Term, Acc1, Rem).
 
 parse_json_string_help(['\\'|['u'|[A|[B|[C|[D|Str]]]]]], Term, Acc, Rem),
         foreach(Ch in [A,B,C,D]) membchk(Ch, "0123456789ABCDEFabcdef") end =>
-    parse_json_string_help(Str, Term, Acc++[chr(to_integer(['0','x',A,B,C,D]))], Rem).
+    append(Acc, [chr(to_integer(['0','x',A,B,C,D]))]),
+    parse_json_string_help(Str, Term, Acc1, Rem).
 
 parse_json_string_help(['\\'|_], _, _, _) =>
     throw {json_syntax_error, unexpected_escape_sequence}.
 
 parse_json_string_help([C|Str], Term, Acc, Rem) =>
-    parse_json_string_help(Str, Term, Acc++[C], Rem).
+    append(Acc, [C], Acc1),
+    parse_json_string_help(Str, Term, Acc1, Rem).
 
 
 parse_json_number(Str, Term, Rem) =>
     parse_json_number_help(Str, Term, [], Rem).
 
 parse_json_number_help([N|Str], Term, Acc, Rem), membchk(N, "0123456789.") =>
-    parse_json_number_help(Str, Term, Acc++[N], Rem).
+    append(Acc, [N], Acc1),
+    parse_json_number_help(Str, Term, Acc1, Rem).
 
 parse_json_number_help(Str, Term, Acc, Rem), Acc!=[] =>
     Term=to_number(Acc),
@@ -150,7 +161,8 @@ parse_json_array_help([C|Str], Term, Acc, Rem), whitespace(C);C==',' =>
 
 parse_json_array_help(Str, Term, Acc, Rem) =>
     parse_json_term(Str, Term1, Rem1),
-    parse_json_array_help(Rem1, Term, Acc++[Term1], Rem).
+    append(Acc, [Term1], Acc1),
+    parse_json_array_help(Rem1, Term, Acc1, Rem).
 
 
 parse_json_object(Str, Term, Rem) =>
@@ -166,10 +178,12 @@ parse_json_object_help([C|Str], Pairs, Acc, Rem), whitespace(C);C==',' =>
 
 parse_json_object_help(['"'|Str], Pairs, Acc, Rem) =>
     parse_json_kv_pair(Str, Pair, Rem1),
-    parse_json_object_help(Rem1, Pairs, Acc++Pair, Rem).
+    append(Acc, Pair, Acc1),
+    parse_json_object_help(Rem1, Pairs, Acc1, Rem).
 
 parse_json_kv_pair(Str, Pair, Rem) =>
-    parse_json_string(Str, Key, Rem1), parse_json_val(Rem1, Val, Rem2),
+    parse_json_string(Str, Key, Rem1),
+    parse_json_val(Rem1, Val, Rem2),
     Pair=[Key=Val],
     Rem=Rem2.
 
@@ -196,7 +210,8 @@ json_encode(null)=S =>
 
 
 json_encode(Term)=S, string(Term) =>
-    S = "\"" ++ escape_string(Term, []) ++ "\"".
+    append(['"'], escape_string(Term, []), Z),
+    append(Z, ['"'], S).
 
 json_encode(Term)=S, atom(Term) =>
     S = json_encode(to_string(Term)).
@@ -217,23 +232,32 @@ json_encode(Term)=S, map(Term) =>
 escape_string([], Acc)=S =>
     S = Acc.
 escape_string(['"'|T], Acc)=S =>
-    S = escape_string(T, Acc++['\\','"']).
+    append(Acc, ['\\','"'], Acc1),
+    S = escape_string(T, Acc1).
 escape_string(['\\'|T], Acc)=S =>
-    S = escape_string(T, Acc++['\\','\\']).
+    append(Acc, ['\\','\\'], Acc1),
+    S = escape_string(T, Acc1).
 escape_string(['/'|T], Acc)=S =>
-    S = escape_string(T, Acc++['\\','/']).
+    append(Acc, ['\\','/'], Acc1),
+    S = escape_string(T, Acc1).
 escape_string(['\b'|T], Acc)=S =>
-    S = escape_string(T, Acc++['\\','b']).
+    append(Acc, ['\\','b'], Acc1),
+    S = escape_string(T, Acc1).
 escape_string(['\f'|T], Acc)=S =>
-    S = escape_string(T, Acc++['\\','f']).
+    append(Acc, ['\\','f'], Acc1),
+    S = escape_string(T, Acc1).
 escape_string(['\n'|T], Acc)=S =>
-    S = escape_string(T, Acc++['\\','n']).
+    append(Acc, ['\\','n'], Acc1),
+    S = escape_string(T, Acc1).
 escape_string(['\r'|T], Acc)=S =>
-    S = escape_string(T, Acc++['\\','r']).
+    append(Acc, ['\\','r'], Acc1),
+    S = escape_string(T, Acc1).
 escape_string(['\t'|T], Acc)=S =>
-    S = escape_string(T, Acc++['\\','t']).
+    append(Acc, ['\\','t'], Acc1),
+    S = escape_string(T, Acc1).
 escape_string([H|T], Acc)=S =>
-    S = escape_string(T, Acc++[H]).
+    append(Acc, [H], Acc1),
+    S = escape_string(T, Acc1).
 
 
 encode_list([], Acc)=S =>
