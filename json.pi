@@ -30,12 +30,8 @@ import util.
 % decoder codes
 %
 
-json_parse(JSON)=T =>
-    parse_json_term(JSON, T, _).
-
-
-whitespace(C) =>
-    membchk(C, [' ','\t','\n','\r']).
+json_decode(S)=T, string(S) =>
+    parse_json_term(S, T, _).
 
 
 parse_json_term([C|Str], Term, Rem), whitespace(C) =>
@@ -187,15 +183,15 @@ parse_json_kv_pair(Str, Pair, Rem) =>
     Pair=[Key=Val],
     Rem=Rem2.
 
-parse_json_val(['\n'|Str], Val, Rem) =>
-    parse_json_val(Str, Val, Rem).
-
-parse_json_val([' '|Str], Val, Rem) =>
+parse_json_val([C|Str], Val, Rem), whitespace(C) =>
     parse_json_val(Str, Val, Rem).
 
 parse_json_val([':'|Str], Val, Rem) =>
     parse_json_term(Str, Val, Rem).
 
+
+whitespace(C) =>
+    membchk(C, [' ','\t','\n','\r']).
 
 %
 % encoder codes
