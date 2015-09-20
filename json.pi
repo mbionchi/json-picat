@@ -34,10 +34,11 @@ json_parse(JSON)=T =>
     parse_json_term(JSON, T, _).
 
 
-parse_json_term([' '|Str], Term, Rem) =>
-    parse_json_term(Str, Term, Rem).
+whitespace(C) =>
+    membchk(C, [' ','\t','\n','\r']).
 
-parse_json_term(['\n'|Str], Term, Rem) =>
+
+parse_json_term([C|Str], Term, Rem), whitespace(C) =>
     parse_json_term(Str, Term, Rem).
 
 parse_json_term(['"'|Str], Term, Rem) =>
@@ -137,18 +138,14 @@ parse_json_array(Str, Term, Rem) =>
     parse_json_array_help(Str, Term, [], Rem).
 
 parse_json_array_help([']'|Str], Term, [], Rem) =>
-    Term={}, Rem=Str.
+    Term=[], Rem=Str.
+%    Term={}, Rem=Str.
 
 parse_json_array_help([']'|Str], Term, Acc, Rem) =>
-    Term=Acc.to_array(), Rem=Str.
+    Term=Acc, Rem=Str.
+%    Term=Acc.to_array(), Rem=Str.
 
-parse_json_array_help([','|Str], Term, Acc, Rem) =>
-    parse_json_array_help(Str, Term, Acc, Rem).
-
-parse_json_array_help(['\n'|Str], Term, Acc, Rem) =>
-    parse_json_array_help(Str, Term, Acc, Rem).
-
-parse_json_array_help([' '|Str], Term, Acc, Rem) =>
+parse_json_array_help([C|Str], Term, Acc, Rem), whitespace(C);C==',' =>
     parse_json_array_help(Str, Term, Acc, Rem).
 
 parse_json_array_help(Str, Term, Acc, Rem) =>
@@ -164,13 +161,7 @@ parse_json_object_help(['}'|Str], Pairs, Acc, Rem) =>
     Pairs=Acc,
     Rem=Str.
 
-parse_json_object_help([','|Str], Pairs, Acc, Rem) =>
-    parse_json_object_help(Str, Pairs, Acc, Rem).
-
-parse_json_object_help(['\n'|Str], Pairs, Acc, Rem) =>
-    parse_json_object_help(Str, Pairs, Acc, Rem).
-
-parse_json_object_help([' '|Str], Pairs, Acc, Rem) =>
+parse_json_object_help([C|Str], Pairs, Acc, Rem), whitespace(C);C==',' =>
     parse_json_object_help(Str, Pairs, Acc, Rem).
 
 parse_json_object_help(['"'|Str], Pairs, Acc, Rem) =>
