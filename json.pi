@@ -34,6 +34,7 @@ json_decode(S)=T, string(S) =>
     parse_json_term(S, T, _).
 
 
+private
 parse_json_term([C|Str], Term, Rem), whitespace(C) =>
     parse_json_term(Str, Term, Rem).
 
@@ -62,9 +63,11 @@ parse_json_term([n,u,l,l|Str], Term, Rem) =>
     Rem=Str.
 
 
+private
 parse_json_string(Str, Term, Rem) =>
     parse_json_string_help(Str,Term,[],Rem).
 
+private
 parse_json_string_help(['"'|Str], Term, Acc, Rem) =>
     Term=Acc,
     Rem=Str.
@@ -114,9 +117,11 @@ parse_json_string_help([C|Str], Term, Acc, Rem) =>
     parse_json_string_help(Str, Term, Acc1, Rem).
 
 
+private
 parse_json_number(Str, Term, Rem) =>
     parse_json_number_help(Str, Term, [], Rem).
 
+private
 parse_json_number_help([N|Str], Term, Acc, Rem), membchk(N, "0123456789.") =>
     append(Acc, [N], Acc1),
     parse_json_number_help(Str, Term, Acc1, Rem).
@@ -125,6 +130,7 @@ parse_json_number_help(Str, Term, Acc, Rem), Acc!=[] =>
     Term=to_number(Acc),
     Rem=Str.
 
+private
 to_number(Str)=N, membchk('e',Str);membchk('E',Str) =>
         L = Str.split("Ee"),
         C = to_number(L[1]),
@@ -141,9 +147,11 @@ to_number(Str)=N =>
     membchk('.',Str) -> N = to_real(Str); N = to_integer(Str).
 
 
+private
 parse_json_array(Str, Term, Rem) =>
     parse_json_array_help(Str, Term, [], Rem).
 
+private
 parse_json_array_help([']'|Str], Term, [], Rem) =>
     Term=[], Rem=Str.
 %    Term={}, Rem=Str.
@@ -161,10 +169,12 @@ parse_json_array_help(Str, Term, Acc, Rem) =>
     parse_json_array_help(Rem1, Term, Acc1, Rem).
 
 
+private
 parse_json_object(Str, Term, Rem) =>
     parse_json_object_help(Str, Pairs, [], Rem),
     Term=new_map(Pairs).
 
+private
 parse_json_object_help(['}'|Str], Pairs, Acc, Rem) =>
     Pairs=Acc,
     Rem=Str.
@@ -177,12 +187,14 @@ parse_json_object_help(['"'|Str], Pairs, Acc, Rem) =>
     append(Acc, Pair, Acc1),
     parse_json_object_help(Rem1, Pairs, Acc1, Rem).
 
+private
 parse_json_kv_pair(Str, Pair, Rem) =>
     parse_json_string(Str, Key, Rem1),
     parse_json_val(Rem1, Val, Rem2),
     Pair=[Key=Val],
     Rem=Rem2.
 
+private
 parse_json_val([C|Str], Val, Rem), whitespace(C) =>
     parse_json_val(Str, Val, Rem).
 
@@ -190,6 +202,7 @@ parse_json_val([':'|Str], Val, Rem) =>
     parse_json_term(Str, Val, Rem).
 
 
+private
 whitespace(C) =>
     membchk(C, [' ','\t','\n','\r']).
 
@@ -225,6 +238,7 @@ json_encode(Term)=S, list(Term) =>
 json_encode(Term)=S, map(Term) =>
     S = encode_map(map_to_list(Term), "{").
 
+private
 escape_string([], Acc)=S =>
     S = Acc.
 escape_string(['"'|T], Acc)=S =>
@@ -256,6 +270,7 @@ escape_string([H|T], Acc)=S =>
     S = escape_string(T, Acc1).
 
 
+private
 encode_list([], Acc)=S =>
     append(Acc, "]", S).
 
@@ -268,6 +283,7 @@ encode_list([H|T], Acc)=S =>
     append(Y, ",", Z),
     S = encode_list(T, Z).
 
+private
 encode_map([], Acc)=S =>
     append(Acc, "}", S).
 

@@ -2,4 +2,4 @@ import json.
 
 main() =>
     JSONData = read_file_chars(),
-    writef("%w%n", json_decode(JSONData)).
+    writef("%s%n", json_encode(json_decode(JSONData))).
