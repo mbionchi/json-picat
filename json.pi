@@ -35,7 +35,7 @@ json_decode(S)=T, string(S) =>
     parse_json_term(S, T, _).
 
 
-private
+%private % FIXME
 parse_json_term([C|Str], Term, Rem), whitespace(C) =>
     parse_json_term(Str, Term, Rem).
 
@@ -178,34 +178,38 @@ parse_json_array_element(Str, Term, Acc, Rem) =>
 
 private
 parse_json_object(Str, Term, Rem) =>
-    parse_json_object_help(Str, Pairs, [], Rem),
-    Term=new_map(Pairs).
+    once ((parse_json_object_kv_pair(Str, Pairs, [], Rem),
+    Term=new_map(Pairs));
+    throw {json_decoding_error, malformed_map}).
 
 private
 parse_json_object_help(['}'|Str], Pairs, Acc, Rem) =>
-    Pairs=Acc,
-    Rem=Str.
+    Pairs=Acc, Rem=Str.
 
-parse_json_object_help([C|Str], Pairs, Acc, Rem), whitespace(C);C==',' =>
+parse_json_object_help([','|Str], Pairs, Acc, Rem) =>
+    parse_json_object_kv_pair(Str, Pairs, Acc, Rem).
+
+parse_json_object_help([C|Str], Pairs, Acc, Rem), whitespace(C) =>
     parse_json_object_help(Str, Pairs, Acc, Rem).
 
-parse_json_object_help(['"'|Str], Pairs, Acc, Rem) =>
-    parse_json_kv_pair(Str, Pair, Rem1),
-    append(Acc, Pair, Acc1),
-    parse_json_object_help(Rem1, Pairs, Acc1, Rem).
-
 private
-parse_json_kv_pair(Str, Pair, Rem) =>
+parse_json_object_kv_pair(['}'|Str], Pairs, [], Rem) =>
+    Pairs=[], Rem=Str.
+
+parse_json_object_kv_pair([C|Str], Pairs, Acc, Rem), whitespace(C) =>
+    parse_json_object_kv_pair(Str, Pairs, Acc, Rem).
+
+parse_json_object_kv_pair(['"'|Str], Pairs, Acc, Rem) =>
     parse_json_string(Str, Key, Rem1),
-    parse_json_val(Rem1, Val, Rem2),
-    Pair=[Key=Val],
-    Rem=Rem2.
+    parse_json_object_val(Rem1, Val, Rem2),
+    append(Acc, [Key=Val], Acc1),
+    parse_json_object_help(Rem2, Pairs, Acc1, Rem).
 
 private
-parse_json_val([C|Str], Val, Rem), whitespace(C) =>
-    parse_json_val(Str, Val, Rem).
+parse_json_object_val([C|Str], Val, Rem), whitespace(C) =>
+    parse_json_object_val(Str, Val, Rem).
 
-parse_json_val([':'|Str], Val, Rem) =>
+parse_json_object_val([':'|Str], Val, Rem) =>
     parse_json_term(Str, Val, Rem).
 
 
