@@ -24,6 +24,7 @@
 % OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 % THE SOFTWARE.
 
+module json.
 import util.
 
 %
@@ -106,7 +107,7 @@ parse_json_string_help(['\\'|['t'|Str]], Term, Acc, Rem) =>
 
 parse_json_string_help(['\\'|['u'|[A|[B|[C|[D|Str]]]]]], Term, Acc, Rem),
         foreach(Ch in [A,B,C,D]) membchk(Ch, "0123456789ABCDEFabcdef") end =>
-    append(Acc, [chr(to_integer(['0','x',A,B,C,D]))]),
+    append(Acc, [chr(to_integer(['0','x',A,B,C,D]))], Acc1),
     parse_json_string_help(Str, Term, Acc1, Rem).
 
 parse_json_string_help(['\\'|_], _, _, _) =>
@@ -147,18 +148,18 @@ to_number(Str)=N =>
     membchk('.',Str) -> N = to_real(Str); N = to_integer(Str).
 
 
-private
+%private
 parse_json_array(Str, Term, Rem) =>
     parse_json_array_help(Str, Term, [], Rem).
 
 private
 parse_json_array_help([']'|Str], Term, [], Rem) =>
-    Term=[], Rem=Str.
-%    Term={}, Rem=Str.
+    Term=[],
+    Rem=Str.
 
 parse_json_array_help([']'|Str], Term, Acc, Rem) =>
-    Term=Acc, Rem=Str.
-%    Term=Acc.to_array(), Rem=Str.
+    Term=Acc,
+    Rem=Str.
 
 parse_json_array_help([C|Str], Term, Acc, Rem), whitespace(C);C==',' =>
     parse_json_array_help(Str, Term, Acc, Rem).
