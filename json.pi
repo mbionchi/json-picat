@@ -35,7 +35,7 @@ json_decode(S)=T, string(S) =>
     parse_json_term(S, T, _).
 
 
-%private % FIXME
+private
 parse_json_term([C|Str], Term, Rem), whitespace(C) =>
     parse_json_term(Str, Term, Rem).
 
