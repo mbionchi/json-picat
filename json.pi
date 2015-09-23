@@ -42,7 +42,7 @@ parse_json_term([C|Str], Term, Rem), whitespace(C) =>
 parse_json_term(['"'|Str], Term, Rem) =>
     parse_json_string(Str, Term, Rem).
 
-parse_json_term([N|Str], Term, Rem), membchk(N,"-0123456789") =>
+parse_json_term([N|Str], Term, Rem), (digit(N);N=='-') =>
     parse_json_number([N|Str], Term, Rem).
 
 parse_json_term(['{'|Str], Term, Rem) =>
@@ -52,16 +52,13 @@ parse_json_term(['['|Str], Term, Rem) =>
     parse_json_array(Str, Term, Rem).
 
 parse_json_term([t,r,u,e|Str], Term, Rem) =>
-    Term=true,
-    Rem=Str.
+    Term=true, Rem=Str.
 
 parse_json_term([f,a,l,s,e|Str], Term, Rem) =>
-    Term=false,
-    Rem=Str.
+    Term=false, Rem=Str.
 
 parse_json_term([n,u,l,l|Str], Term, Rem) =>
-    Term=null,
-    Rem=Str.
+    Term=null, Rem=Str.
 
 
 private
@@ -70,8 +67,7 @@ parse_json_string(Str, Term, Rem) =>
 
 private
 parse_json_string_help(['"'|Str], Term, Acc, Rem) =>
-    Term=Acc,
-    Rem=Str.
+    Term=Acc, Rem=Str.
 
 parse_json_string_help(['\\'|['"'|Str]], Term, Acc, Rem) =>
     append(Acc, ['"'], Acc1),
@@ -123,13 +119,12 @@ parse_json_number(Str, Term, Rem) =>
     parse_json_number_help(Str, Term, [], Rem).
 
 private
-parse_json_number_help([N|Str], Term, Acc, Rem), membchk(N, "0123456789.") =>
+parse_json_number_help([N|Str], Term, Acc, Rem), (digit(N);N=='-';N=='.') =>
     append(Acc, [N], Acc1),
     parse_json_number_help(Str, Term, Acc1, Rem).
 
 parse_json_number_help(Str, Term, Acc, Rem), Acc!=[] =>
-    Term=to_number(Acc),
-    Rem=Str.
+    Term=to_number(Acc), Rem=Str.
 
 private
 to_number(Str)=N, membchk('e',Str);membchk('E',Str) =>
