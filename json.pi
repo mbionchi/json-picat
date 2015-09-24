@@ -109,9 +109,12 @@ parse_json_string_help(['\\'|['u'|[A|[B|[C|[D|Str]]]]]], Term, Acc, Rem),
 parse_json_string_help(['\\'|_], _, _, _) =>
     throw {json_syntax_error, unexpected_escape_sequence}.
 
-parse_json_string_help([C|Str], Term, Acc, Rem) =>
+parse_json_string_help([C|Str], Term, Acc, Rem), ord(C)<256 =>
     append(Acc, [C], Acc1),
     parse_json_string_help(Str, Term, Acc1, Rem).
+
+parse_json_string_help([C|Str], Term, Acc, Rem), ord(C)>255 =>
+    throw {json_syntax_error, malformed_string, unescaped_unicode_char}.
 
 
 private
@@ -271,6 +274,15 @@ escape_string(['\r'|T], Acc)=S =>
 escape_string(['\t'|T], Acc)=S =>
     append(Acc, ['\\','t'], Acc1),
     S = escape_string(T, Acc1).
+escape_string([H|T], Acc)=S, ord(H)>255 =>
+    append(Acc, ['\\', 'u'], Acc1),
+    F = to_hex_string(ord(H)),
+    once ([A,B,C,D] = F;
+    [A,B,C,D] = ['0'|F];
+    [A,B,C,D] = ['0','0'|F];
+    [A,B,C,D] = ['0','0','0'|F]),
+    append(Acc1, [A,B,C,D], Acc2),
+    S=escape_string(T, Acc2).
 escape_string([H|T], Acc)=S =>
     append(Acc, [H], Acc1),
     S = escape_string(T, Acc1).
