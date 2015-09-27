@@ -1,23 +1,39 @@
 % file: json.pi
 % author: Mike Bionchik
 % version: 0.1
-% description: a JSON encoder/decoder module for Picat.  The module provides
-%              two functions: json_decode/1 and json_encode/1.  The decode
-%              function accepts a string as its parameter and returns a Picat
-%              term.  The encode function accepts a Picat term as its parameter
-%              and returns a string of JSON-encoded text.
-%              The encoding function maps Picat terms to JSON as follows:
-%                * Picat Map -> JSON Object
-%                * Picat List -> JSON Array
-%                * Picat Array -> JSON Array
-%                * Picat String -> JSON String
-%                * Picat Number -> JSON Number
-%              The decoding function maps JSON to Picat terms as follows:
-%                * JSON Object -> Picat Map
-%                * JSON Array -> Picat List
-%                * JSON String -> Picat String
-%                * JSON Number with a decimal -> Picat Real Number
-%                * JSON Number without a decimal -> Picat Integer
+% description: a JSON encoder/decoder module for Picat.
+% readme: 
+%         The module provides the following functions:
+%           * json_encode(Term)=String
+%               where Term is any Picat term and String is the JSON
+%               representation of the term.
+%           * json_encode(List, _)=String
+%               where List is a Picat list, _ is a dummy parameter, and String
+%               is the JSON representation of the list.  This function should
+%               be used when you're encoding an empty list or a list of
+%               characters, since an attempt to encode either an empty list or
+%               a list of characters with json_encode/1 will result in the list
+%               being represented as a String.
+%           * json_decode(String)=Term
+%               where String is a proper JSON string and Term is the Picat term
+%               that String represents.
+%
+%         The json_encode/1 function maps Picat terms to JSON as follows:
+%           * Picat String -> JSON String
+%           * Picat Number -> JSON Number
+%           * Picat Array -> JSON Array
+%           * Picat List -> JSON Array
+%           * Picat Map -> JSON Object
+%           * Note that json_encode/1 will map empty lists and lists of
+%             characters to JSON Strings.  To avoid that, use either
+%             json_encode/2 or first convert the list to an array.
+%
+%         The json_decode/1 function maps JSON to Picat terms as follows:
+%           * JSON Object -> Picat Map
+%           * JSON Array -> Picat List
+%           * JSON String -> Picat String
+%           * JSON Number with a decimal -> Picat Real Number
+%           * JSON Number without a decimal -> Picat Integer
 %
 % github link: https://github.com/mbionchi/json-picat
 %
@@ -270,6 +286,9 @@ whitespace(C) =>
 %
 % encoder codes
 %
+
+json_encode(Term, _)=S, list(Term) =>
+    S = encode_list(Term, "[").
 
 json_encode(true)=S =>
     S = "true".

@@ -3,3 +3,4 @@ json.pi:
 a json encoder/decoder module for Picat.
 
 todo: streaming capabilities (?)
+      better handling for string vs list
