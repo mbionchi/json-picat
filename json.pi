@@ -6,6 +6,19 @@
 %              function accepts a string as its parameter and returns a Picat
 %              term.  The encode function accepts a Picat term as its parameter
 %              and returns a string of JSON-encoded text.
+%              The encoding function maps Picat terms to JSON as follows:
+%                * Picat Map -> JSON Object
+%                * Picat List -> JSON Array
+%                * Picat Array -> JSON Array
+%                * Picat String -> JSON String
+%                * Picat Number -> JSON Number
+%              The decoding function maps JSON to Picat terms as follows:
+%                * JSON Object -> Picat Map
+%                * JSON Array -> Picat List
+%                * JSON String -> Picat String
+%                * JSON Number with a decimal -> Picat Real Number
+%                * JSON Number without a decimal -> Picat Integer
+%
 % github link: https://github.com/mbionchi/json-picat
 %
 % The MIT License (MIT)
