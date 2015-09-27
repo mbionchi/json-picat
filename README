@@ -2,4 +2,4 @@ json.pi:
 
 a json encoder/decoder module for Picat.
 
-todo: add unicode capabilities for encoding
+todo: streaming capabilities (?)
