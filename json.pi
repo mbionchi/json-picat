@@ -60,7 +60,6 @@
 % THE SOFTWARE.
 
 module json.
-import util.
 
 %
 % decoder codes
